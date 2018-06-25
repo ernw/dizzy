@@ -1,0 +1,36 @@
+NAME = $(shell basename $(CURDIR))
+OBJ = config.py __init__.py $(NAME)
+
+FOLD = $(shell ls -G --format=commas $(NAME)/)
+FOLDA = $(shell echo $(FOLD) | sed 's/, /\\", \\"/g')
+DIZZ = $(shell if [ -d $(NAME)/dizz/ ]; then ls -G --format=commas $(NAME)/dizz/; fi)
+DIZZA = $(shell if [ -d $(NAME)/dizz/ ]; then echo $(DIZZ) | sed 's/, /\\", \\"/g'; fi)
+ACT = $(shell if [ -d $(NAME)/act/ ]; then ls -G --format=commas $(NAME)/act/; fi)
+ACTA = $(shell if [ -d $(NAME)/act/ ]; then echo $(ACT) | sed 's/, /\\", \\"/g'; fi)
+JOB = $(shell if [ -d $(NAME)/job/ ]; then ls -G --format=commas $(NAME)/job/; fi)
+JOBA = $(shell if [ -d $(NAME)/job/ ]; then echo $(JOB) | sed 's/, /\\", \\"/g'; fi)
+PROBE = $(shell if [ -d $(NAME)/probe/ ]; then ls -G --format=commas $(NAME)/probe/; fi)
+PROBEA = $(shell if [ -d $(NAME)/probe/ ]; then echo $(PROBE) | sed 's/, /\\", \\"/g' | sed 's/.py//g'; fi)
+SESS = $(shell if [ -d $(NAME)/session/ ]; then ls -G --format=commas $(NAME)/session/; fi)
+SESSA = $(shell if [ -d $(NAME)/session/ ]; then echo $(SESS) | sed 's/, /\\", \\"/g' | sed 's/.py//g'; fi)
+
+.PHONY: module clean
+module: clean
+		echo "__all__ = [ \"$(FOLDA)\" ]" > $(NAME)/__init__.py
+		if [ -d $(NAME)/dizz ]; then echo "__all__ = [ \"$(DIZZA)\" ]" > $(NAME)/dizz/__init__.py; fi
+		if [ -d $(NAME)/act ]; then echo "__all__ = [ \"$(ACTA)\" ]" > $(NAME)/act/__init__.py; fi
+		if [ -d $(NAME)/job ]; then echo "__all__ = [ \"$(JOBA)\" ]" > $(NAME)/job/__init__.py; fi
+		if [ -d $(NAME)/probe ]; then echo "__all__ = [ \"$(PROBEA)\" ]" > $(NAME)/probe/__init__.py; fi
+		if [ -d $(NAME)/session ]; then echo "__all__ = [ \"$(SESSA)\" ]" > $(NAME)/session/__init__.py; fi
+		zip -r $(NAME) $(OBJ)
+		mv $(NAME).zip ../../modules
+
+clean:
+		rm -f $(NAME)/__init__.py
+		if [ -d $(NAME)/dizz ]; then rm -f $(NAME)/dizz/__init__.py; fi
+		if [ -d $(NAME)/act ]; then rm -f $(NAME)/act/__init__.py; fi
+		if [ -d $(NAME)/job ]; then rm -f $(NAME)/job/__init__.py; fi
+		if [ -d $(NAME)/probe ]; then rm -f $(NAME)/probe/__init__.py; fi
+		if [ -d $(NAME)/session ]; then rm -f $(NAME)/session/__init__.py; fi
+
+all: clean module
