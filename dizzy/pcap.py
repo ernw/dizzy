@@ -28,15 +28,16 @@
 #       THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 #       (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #       OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-import imp
-import threading
+
+from threading import Thread
 from time import sleep
+from dizzy.tools import check_root
 
 from dizzy.log import print_dizzy, VERBOSE_1, VERBOSE_2
 
-class Pcap(threading.Thread):
+class Pcap(Thread):
     def __init__(self, config, filename):
-        threading.Thread.__init__(self)
+        Thread.__init__(self)
         try:
             import pcapy
             self.pcap = pcapy
@@ -46,6 +47,7 @@ class Pcap(threading.Thread):
             self.pcap = None
             return
         self.interface = config.get("interface", "any")
+        check_root("use the PCAP feature")
         print_dizzy("pcap/init: listening on interface '%s'." % self.interface, VERBOSE_1)
         if not self.interface is "any":
             if not self.interface in self.pcap.findalldevs():

@@ -1,0 +1,22 @@
+name = "demo"
+format = 2
+
+objects = [
+    #Some Fields
+    Field("field1",     b"\x00",     fuzz="std"),
+    Field("field2",     3 * b"\x00", fuzz="std"),
+
+    #a list
+    List("list_field",  config_value("a_global_option")),
+
+    #a length field
+    Field("len_field",  b"\x00\x00",   fuzz="std"),
+
+    #some more fields
+    Field("field3",     24,    2*8,  fuzz="std", endian="<"),
+    Field("field4",     0,     2*8,  fuzz="std", endian="<"),
+]
+
+functions = [
+    length_bytes("len_field", "field1", "field4"),
+]

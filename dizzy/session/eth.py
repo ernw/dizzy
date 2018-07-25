@@ -30,12 +30,10 @@
 #       OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 from . import SessionException, SessionParseException
 from socket import AF_INET, IPPROTO_IP, gethostname, PF_PACKET, SOCK_RAW, socket, gethostbyname
-from traceback import print_exc
 from ctypes import Structure, c_char, c_short, create_string_buffer
-from os import geteuid
-from sys import exit
 from dizzy.config import CONFIG
 from dizzy.log import print_dizzy, DEBUG
+from dizzy.tools import check_root
 
 class Ifreq(Structure):
     _fields_ = [("ifr_ifrn", c_char * 16), ("ifr_flags", c_short)]
@@ -47,9 +45,7 @@ class DizzySession(object):
     ETH_P_ALL = 0x0003
 
     def __init__(self, section_proxy):
-        if geteuid() != 0:
-            print_dizzy("You must be root to send on eth.")
-            exit(1)
+        check_root("use the ETH session")
 
         self.interface = section_proxy.get('target_interface')
         self.timeout = section_proxy.getfloat('timeout', 1)
@@ -100,11 +96,11 @@ class DizzySession(object):
         try:
             if not self.maxsize is None and len(data) > self.maxsize:
                 data = data[:self.maxsize - 1]
-                print_dizzy("Truncated data to %d byte." % self.maxsize, DEBUG)
+                print_dizzy("session/eth: Truncated data to %d byte." % self.maxsize, DEBUG)
             self.s.send(data)
         except Exception as e:
             if self.auto_reopen:
-                print_dizzy("session got closed '%s', autoreopening..." % e, DEBUG)
+                print_dizzy("session/eth: session got closed '%s', autoreopening..." % e, DEBUG)
                 print_dizzy(e, DEBUG)
                 self.close()
                 self.open()

@@ -33,6 +33,7 @@ from traceback import print_exc
 from sys import stdout, stdin
 from binascii import hexlify
 from dizzy.log import print_dizzy, DEBUG
+from dizzy.config import CONFIG
 
 class DizzySession(object):
     def __init__(self, section_proxy):
@@ -68,4 +69,4 @@ class DizzySession(object):
         if line == ".\n":
             return None
         else:
-            return line
+            return line.encode(CONFIG["GLOBALS"]["CODEC"])

@@ -40,7 +40,7 @@ from dizzy.module import DizzyModule
 from dizzy.library import DizzyLibrary
 
 CONFIG = { "GLOBALS" :
-               { "VERSION" : "2.0rc3",
+               { "VERSION" : "2.0",
                  "PLATFORM" : system(),
                  "RANDOM_SEED" : "1l0v3D1zzYc4us31tsR4nd0m1sr3Pr0duc4bl3!",
                  "CODEC" : "utf-8",
@@ -189,6 +189,7 @@ def init_config():
                                 with act.open() as input:
                                     name = "%s/%s/%s" % (module.stem, component.stem, act.name)
                                     CONFIG["ACT"][name] = input.read()
+                                    print_dizzy("Overwriting %s from %s" % (name, act))
                         elif component.stem == "dizz":
                             for dizz in component.iterdir():
                                 if not dizz.is_file():
@@ -197,6 +198,7 @@ def init_config():
                                 with dizz.open() as input:
                                     name = "%s/%s/%s" % (module.stem, component.stem, dizz.name)
                                     CONFIG["DIZZ"][name] = input.read()
+                                    print_dizzy("Overwriting %s from %s" % (name, dizz))
                         elif component.stem == "job":
                             for job in component.iterdir():
                                 if not job.is_file():
@@ -205,6 +207,7 @@ def init_config():
                                 with job.open() as input:
                                     name = "%s/%s/%s" % (module.stem, component.stem, job.name)
                                     CONFIG["JOB"][name] = input.read()
+                                    print_dizzy("Overwriting %s from %s" % (name, job))
                         elif component.stem == "probe":
                             for probe in component.iterdir():
                                 if not probe.is_file():
@@ -214,6 +217,7 @@ def init_config():
                             obj = getattr(getattr(__import__(name), module.stem).probe, probe.stem)
                             name = "%s.probe.%s" % (module.stem, probe.stem)
                             CONFIG["PROBE"][name] = obj
+                            print_dizzy("Overwriting %s from %s" % (name, probe))
                         elif component.stem == "session":
                             for session in component.iterdir():
                                 if not session.is_file():
@@ -223,6 +227,7 @@ def init_config():
                                 obj = getattr(getattr(__import__(name), module.stem).session, session.stem)
                                 name = "%s.session.%s" % (module.stem, session.stem)
                                 CONFIG["SESSION"][name] = obj
+                                print_dizzy("Overwriting %s from %s" % (name, session))
                     if not module.stem in CONFIG["MODULES"]:
                         class Object(object):
                             pass

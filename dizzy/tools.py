@@ -33,10 +33,22 @@
 from . import DizzyRuntimeException
 from dizzy.log import print_dizzy, DEBUG
 from struct import unpack, pack
+import ctypes
+import os
 
 endian_format = {"<": "little",
                  ">": "big",
                  "!": "big"}
+
+def check_root(text):
+    if hasattr(os, 'geteuid'):
+        if os.geteuid() != 0:
+            print_dizzy("You must be root to " + text + ".")
+            exit(1)
+    else:
+        if ctypes.windll.shell32.IsUserAnAdmin() != 1:
+            print_dizzy("You must be Admin to " + text + ".")
+            exit(1)
 
 
 def unique(seq, idfun=None):

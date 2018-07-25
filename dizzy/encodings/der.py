@@ -82,7 +82,7 @@ def encode(dizz_state):
                     cur_node = new_node
                     cur_depth = depth
 
-    from pprint import pprint
+    #from pprint import pprint
     #pprint(tree)
 
     return enc_tree(tree)
