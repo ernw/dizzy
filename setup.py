@@ -53,6 +53,7 @@ setup(name='dizzy',
       python_requires='>=3',
       install_requires=[
           'exrex',
+          'pcapy',
       #    'Crypto'
       ],
       test_suite='nose.collector',

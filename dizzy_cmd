@@ -43,7 +43,7 @@ if version_info.major < 3:
     exit(1)
 
 def main(do_profile=False):
-    print_dizzy("%s version %s" % (basename(argv[0]), config.CONFIG["GLOBALS"]["VERSION"]), REDUCE)
+    print_dizzy("%s version %s running on %s" % (basename(argv[0]), config.CONFIG["GLOBALS"]["VERSION"], config.CONFIG["GLOBALS"]["PLATFORM"]), REDUCE)
 
     parser = ArgumentParser()
     parser.add_argument(dest='file', metavar='jobfile', nargs='?', default="")

@@ -37,7 +37,7 @@ class DizzState(State):
         State.__init__(self, obj)
 
     def next(self):
-        if isinstance(self.iter, GeneratorType):
+        if not self.is_dizz():
             # Mutate
             self.bak = next(self.iter)
             self.cur = self.bak
@@ -48,13 +48,14 @@ class DizzState(State):
             self.cur = self.iter.call_functions()
 
     def is_dizz(self):
-        return not isinstance(self.iter, GeneratorType)
+        from dizzy.dizz_iterator import DizzIterator
+        return isinstance(self.iter, DizzIterator)
 
     def reset(self):
         # To reset the state to the value before a function is call, it have to be checked
         # if the self.iter is DizzIterator (nested Dizz object).
         # If self.iter is DizzIterator, the fields of the dizz object have to be reset, too.
-        if not isinstance(self.iter, GeneratorType):
+        if self.is_dizz():
             self.iter.reset()
 
         self.cur = self.bak

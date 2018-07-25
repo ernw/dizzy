@@ -1,9 +1,148 @@
-# dizz file
+# dizzy
 
-So, now a short introduction to dizzy packet and protocol specifications:
+dizzy is a fuzzing framework, written in python and capable of state-full and state-less fuzzing with a lot of output options.
+
+## usage
+
+```
+$dizzy_cmd version 2.0 running on Linux
+usage: dizzy_cmd [-h] [-s START_AT] [-d SEC] [-l] [-o OPTIONS] [jobfile]
+
+positional arguments:
+  jobfile
+
+optional arguments:
+  -h, --help   show this help message and exit
+  -s START_AT  Start at the given step
+  -d SEC       Output status every SEC seconds
+  -l           List all loaded modules and their contents.
+  -o OPTIONS   Overwrite a config option
+```
+
+A [jobfile](jobfile) is all that is needed. The `-s START_AT` option can be used to start the fuzzing process at a given step and skip all previous steps. The `-d SEC` option configures the output interval of progress messages and using the `-o OPTIONS` parameter, config values from the jobfile can be overwritten.
+
+
+## jobfile
+
+The Job Configfile contains all information necessary to start a fuzzing job
+
+The `[job]` section defines which interaction file (state-full fuzzing) or which dizz file (state-less fuzzing) to use, the fuzzing mode and other parameters, like verbosity or the delay between mutations. 
+
+The `[output]` section defines were to send the generated data. The only common parameter is the `type` parameter, defining which session module to use. All other parameters in this section are session module dependent.
+
+In the optional `[probe]` section a target probe can be defined. The probe runs after each complete fuzzing step and checks if the target is still available.
+
+In the optional `[value]` section, generic values can be defined. Those values will be available to .dizz and .act files via the `config_value` function.
+
+```
+[job]
+file = smb2/act/smb2_tree_connect.act
+mode = none
+delay = 0
+verbose = 4
+
+[output]
+type = session.tcp
+server = False
+auto_reopen = False
+session_reopen = True
+timeout = 5
+target_host = 127.0.0.1
+target_port = 445
+
+#[probe]
+#type = icmp
+#timeout = 1
+#pkg_size = 64
+#target_host = 192.168.2.1
+
+[values]
+creds_file = ./creds
+share_path = \\127.0.0.1\test
+```
+
+## module structure
+
+Modules are created from the _modules\_src_ folder. A Makefile is provided that generates the \_\_init\_\_.py index files and packs the module zip files. To update the modules run _make_ in the modules\_src folder:
+```
+~/dizzy/modules_src# make
+```
+to the generated index files, run _make clean_ in the modules\_src folder:
+```
+~/dizzy/modules_src# make clean
+```
+
+In the _modules\_src_ folder, every module has an own folder, named the same as the module. Each module folder has the following structure:
+
+- config.py -- in here, values such as the modules name, the modules external dependecies and the version number are defined.
+- a folder named like the module (smb2 in this example).
+   - a folder named _dizz_, containing the module's .dizz files. (See [DizzFile](dizzfile))
+   - a folder named _act_, containing the module's .act files. (See [ActFile](actfile))
+   - a folder named _job_, containing the module's job files. (See [JobFile](jobfile))
+   - a folder named _probe_, containing the module's probes. (See [Probe](interface-of-probe))
+   - a folder named _session_, containing the module's sessions. (See [Session](interface-of-session))
+   - a folder named _deps_, containing the module's internal dependencies. The folder will be added to pythons include path and its contents can be _import_ ed in .dizz and .act files.
+
+As a example the structure of the smb2 module is shown:
+
+```
+~/dizzy/modules_src# tree smb2
+smb2
+├── config.py
+├── __init__.py
+└── smb2
+    ├── act
+    │   ├── smb2_file_access_read.act
+    │   ├── smb2_file_access_write.act
+    │   ├── smb2_neg_setup_auth.act
+    │   └── smb2_tree_connect.act
+    ├── deps
+    │   ├── nmb
+    │   │   ├── ...
+    │   ├── pyasn1
+    │   │   └── ...
+    │   └── smb
+    │       ├── ...
+    ├── dizz
+    │   ├── smb2_close_request.dizz
+    │   ├── smb2_create_request_read.dizz
+    │   ├── smb2_create_request_write.dizz
+    │   ├── smb2_negotiate_req.dizz
+    │   ├── smb2_read_request.dizz
+    │   ├── smb2_session_setup_req.dizz
+    │   ├── smb2_tree_connect_req.dizz
+    │   ├── smb2_write_request.dizz
+    │   └── smb_com_negotiate_req.dizz
+    ├── job
+    │   ├── smb2_file_access_read.conf
+    │   ├── smb2_file_access_write.conf
+    │   └── smb2_tree_connect.conf
+    └── probe
+        └── smb2.py
+```
+
+## wireshark plugin
+
+In the wireshark folder, there is a lua plugin to export parsed packet in `.dizz` files.
+
+Note, that it requires a lua version of 5.2.0 or newer.
+
+To use it, run 
+
+```
+$ cwd
+~/dizzy/wireshark
+$ wireshark -X lua_script:dizzy.lua
+```
+ 
+
+
+## dizz file
+
+So, now a short introduction to the dizzy packet and protocol specifications:
 
 A single packet is described by a so called dizz file.
-Some example files can be found in the dizzes folder that comes with dizzy.
+Some example files can be found in the demo module folder that comes with dizzy.
 These files are python code so you need to write them in python syntax and format rules.
 They consist of 2 variables which need to be defined.
 
@@ -251,7 +390,7 @@ The following list show the pre-defined functions which is has the [interface](I
     ]
     ```
 
-# act file
+## act file
 
 Ok, that are the packet descriptions so far.
 Ones you want to get state full, you need to write interaction in act files. 
@@ -290,5 +429,63 @@ def test(interaction_iterator, dizzy_iterator, response):
     dizzy_iterator["field4"] = buf0
     buf1 = interaction_iterator["Dizz0"]["field0"]
     interaction_iterator["Dizz3"]["field0"] = buf1
+```
 
+## Interface of Probe
+This section describes the interface of the probe objects.
+A field object have mandatory attributes.
 
+### Mandatory
+- `__init__(self, section_proxy)`
+- `open(self)` have to be a `function`, which open the probe.
+- `close(self)` have to be a `function`, which close the probe.
+- `probe(self)` have to be a `function`, which runs the probe check and returns `True` or `False`.  
+  
+### Example
+A probe always succeeding:
+```python
+class DizzyProbe(object):
+    def __init__(self, section_proxy):
+        pass
+
+    def open(self):
+        pass
+
+    def probe(self):
+        return True
+
+    def close(self):
+        pass
+```
+
+## Interface of Session
+This section describes the interface of the session objects.
+A field object have mandatory attributes.
+
+### Mandatory
+- `__init__(self, section_proxy)`
+- `open(self)` have to be a `function`, which open the session.
+- `close(self)` have to be a `function`, which close the session.
+- `send(self, data)` have to be a `function`, which send data through the session.  
+  * `data` have to be a bytes.
+- `recv(self)` have to be a `function`, which receive data from the session.
+
+### Example
+The following example takes the creates a session as `stdin` for input and `stdout` for output:
+```python
+class DizzySession(object):
+    def __init__(self, section_proxy):
+        pass
+
+    def open(self):
+        pass
+
+    def send(self, data):
+        self.f.write(data + b"\n")
+
+    def recv(self):
+        return stdin.readline()
+
+    def close(self):
+        pass
+```

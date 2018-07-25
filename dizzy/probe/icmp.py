@@ -30,11 +30,10 @@
 #       OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 from . import ProbeParseException, ProbeException
 from dizzy.log import print_dizzy, VERBOSE_1, DEBUG
-from dizzy.tools import csum_inet
+from dizzy.tools import csum_inet, check_root
 from os import getpid, geteuid
 from socket import socket, inet_aton, inet_pton, getprotobyname, AF_INET, AF_INET6, SOCK_RAW, error
 from struct import pack, unpack
-from sys import exit
 
 class DizzyProbe(object):
     ICMP_ECHO_REPLY = 0
@@ -43,6 +42,8 @@ class DizzyProbe(object):
     ICMP6_ECHO_REPLY = 129
     
     def __init__(self, section_proxy):
+        check_root("use the ICMP probe")
+
         self.target_host = section_proxy.get('target_host')
         self.timeout = section_proxy.getfloat('timeout', 1)
         self.pkg_size = section_proxy.getint('pkg_size', 64)
@@ -65,10 +66,6 @@ class DizzyProbe(object):
                 raise ProbeParseException("probe/icmp: unknown address family: %s: %s, %s" %
                                                (self.target_host, e, f))
         self.pid = getpid() & 0xFFFF
-        if geteuid() != 0:
-            print_dizzy("probe/icmp: you must be root to use the ICMP probe.")
-            exit(1)
-        
         self.header = pack("!BBHHH", echo, 0, 0, self.pid, 0)
 
         pad = list()

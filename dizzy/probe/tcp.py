@@ -30,6 +30,7 @@
 #       OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 from . import ProbeParseException, ProbeException
 from dizzy.log import print_dizzy, VERBOSE_1, DEBUG
+from dizzy.tools import check_root
 from socket import inet_aton, inet_pton, AF_INET, AF_INET6, socket, SOCK_STREAM, SOL_SOCKET, SO_BROADCAST, \
     SO_REUSEADDR, SHUT_RDWR
 from binascii import unhexlify
@@ -41,6 +42,8 @@ class DizzyProbe(object):
         self.target_port = section_proxy.getint('target_port')
         self.source_host = section_proxy.get('source_host', None)
         self.source_port = section_proxy.getint('source_port', None)
+        if not self.source_host is None and self.source_port <= 1024:
+            check_root("use a source port <= 1024")
         self.timeout = section_proxy.getfloat('timeout', 1)
         self.retry = section_proxy.getint('retry', 2)
         self.is_open = False
